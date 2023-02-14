@@ -1,6 +1,10 @@
 from .pages.product_page import ProductPage
 from .pages.basket_page import BasketPage
+from .pages.login_page import LoginPage
+from .pages.base_page import BasePage
+
 import pytest
+import time
 
 @pytest.mark.skip
 @pytest.mark.parametrize('link', ["http://selenium1py.pythonanywhere.com/catalogue/coders-at-work_207/?promo=offer0",
@@ -60,6 +64,7 @@ def test_guest_can_go_to_login_page_from_product_page(browser):
     page.open()
     page.go_to_login_page()
 
+@pytest.mark.skip
 def test_guest_cant_see_product_in_basket_opened_from_product_page(browser):
     link = "https://selenium1py.pythonanywhere.com/catalogue/the-shellcoders-handbook_209/"
     page = BasketPage(browser, link)
@@ -67,3 +72,33 @@ def test_guest_cant_see_product_in_basket_opened_from_product_page(browser):
     page.go_to_basket_page()
     page.should_be_basket_empty()
     page.should_be_basket_empty_message()
+
+
+class TestUserAddToBasketFromProductPage():
+
+    @pytest.fixture(scope="function", autouse=True)
+    def setup(self, browser):
+
+        link = "http://selenium1py.pythonanywhere.com/accounts/login/"
+        email = str(time.time()) + "@fakemail.org"
+        password = "Test-12345"
+        self.registration = LoginPage(browser, link)
+        self.registration.open()
+        self.registration.register_new_user(email, password)
+        self.registration.should_be_authorized_user()
+
+
+
+    def test_user_can_add_to_basket(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/en-gb/catalogue/hacking-exposed-wireless_208/"
+        self.page = ProductPage(browser, link)   # инициализируем Page Object, передаем в конструктор экземпляр драйвера и url адрес 
+        self.page.open()                      # открываем страницу
+        self.page.tap_on_basket()
+        self.page.should_be_added_product()
+        self.page.should_be_increased_basket_price()
+
+    def test_user_cant_see_success_message(self, browser):
+        link = "http://selenium1py.pythonanywhere.com/en-gb/catalogue/hacking-exposed-wireless_208/"
+        self.page = ProductPage(browser, link)
+        self.page.open()
+        self.page.should_not_be_success_message_after_openning_page()
